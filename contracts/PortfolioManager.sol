@@ -1,4 +1,4 @@
-pragma solidity >=0.4.21 <0.6.0;
+pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -8,9 +8,10 @@ import "./Uniswap/UniswapExchangeInterface.sol";
 
 contract PortfolioManager is Ownable {
     using SafeMath for uint;
-    UniswapExchangeInterface uniswap;
+    UniswapFactoryInterface factory;
 
     address[] investments;
+    address payable recipient;
     uint8 constant HUNDRED_PERCENT = 100;
     uint8 constant SWAP_THRESHOLD = 95;
     mapping(address=>uint8) percentages;
@@ -22,20 +23,23 @@ contract PortfolioManager is Ownable {
     );
 
     constructor(address _uniswap) public {
-        uniswap = UniswapExchangeInterface(_uniswap);
+        factory = UniswapFactoryInterface(_uniswap);
+        recipient = msg.sender;
     }
 
     function() external payable {
         for (uint i = 0; i < investments.length; i++) {
             address token = investments[i];
             uint256 amountETH = msg.value.mul(percentages[token]).div(HUNDRED_PERCENT);
-            uint256 minToken = uniswap.getEthToTokenInputPrice(amountETH).mul(SWAP_THRESHOLD).div(100);
-            uniswap.ethToTokenTransferInput.value(amountETH)(minToken, 0, owner());
+            UniswapExchangeInterface exchange = UniswapExchangeInterface(factory.getExchange(token));
+            uint256 minToken = exchange.getEthToTokenInputPrice(amountETH).mul(SWAP_THRESHOLD).div(100);
+            exchange.ethToTokenTransferInput.value(amountETH)(minToken, 0, owner());
         }
-        owner().transfer(address(this).balance);
+        uint256 remaining_eth = address(this).balance;
+        recipient.transfer(remaining_eth);
     }
 
-    function setPortfolio(address[] _tokens, uint8[] _percentages ) public returns (bool success) {
+    function setPortfolio(address[] memory _tokens, uint8[] memory _percentages ) public returns (bool success) {
         require(_tokens.length == _percentages.length, "Use arrays of same length for updateing");
         clearPortfolio();
         uint256 percentageSum = 0;
@@ -56,5 +60,4 @@ contract PortfolioManager is Ownable {
         delete investments;
         return true;
     }
-
 }
