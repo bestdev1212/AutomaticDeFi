@@ -34,10 +34,14 @@ contract PortfolioManager is Ownable {
         recipient.transfer(remaining);
     }
 
-    function setPortfolio(address _token, uint8 _percentage ) public returns (bool success) {
-        require(factory.getExchange(_token) != address(0), "Token has no exchange yet.");
-        investments.push(_token);
-        percentages[_token] = _percentage;
+    function setPortfolio(address[] memory _tokens, uint8[] memory _percentages ) public returns (bool success) {
+        for (uint i = 0; i < _tokens.length; i++) {
+            address _token = _tokens[i];
+            uint8 _percentage = _percentages[i];
+            require(factory.getExchange(_token) != address(0), "Token has no exchange yet.");
+            investments.push(_token);
+            percentages[_token] = _percentage;
+        }
         return true;
     }
 
