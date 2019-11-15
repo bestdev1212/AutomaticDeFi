@@ -10,7 +10,7 @@ contract PortfolioManager is Ownable {
     using SafeMath for uint;
     UniswapFactoryInterface factory;
 
-    address[] investments;
+    address[] public investments;
     address payable recipient;
     uint8 constant HUNDRED_PERCENT = 100;
     uint8 constant SWAP_THRESHOLD = 95;
@@ -34,7 +34,7 @@ contract PortfolioManager is Ownable {
         recipient.transfer(remaining);
     }
 
-    function setPortfolio(address[] memory _tokens, uint8[] memory _percentages ) public returns (bool success) {
+    function setPortfolio(address[] memory _tokens, uint8[] memory _percentages ) public {
         for (uint i = 0; i < _tokens.length; i++) {
             address _token = _tokens[i];
             uint8 _percentage = _percentages[i];
@@ -42,14 +42,12 @@ contract PortfolioManager is Ownable {
             investments.push(_token);
             percentages[_token] = _percentage;
         }
-        return true;
     }
 
-    function clearPortfolio() public returns (bool success) {
+    function clearPortfolio() public {
         for (uint8 i = 0; i < investments.length; i++) {
             percentages[investments[i]] = uint8(0);
         }
         delete investments;
-        return true;
     }
 }
