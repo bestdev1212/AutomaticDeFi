@@ -14,7 +14,6 @@
       "semicolon-whitespace": "error",
       "function-whitespace": "error",
       "lbrace": "error",
-      "uppercase": "error",
       "no-empty-blocks": "error",
       "no-unused-vars": "error",
       "quotes": "error",
