@@ -34,7 +34,7 @@ contract PortfolioManager is Ownable {
         recipient.transfer(remaining);
     }
 
-    function setPortfolio(address[] memory _tokens, uint8[] memory _percentages ) public {
+    function setPortfolio(address[] calldata _tokens, uint8[] calldata _percentages ) external {
         for (uint i = 0; i < _tokens.length; i++) {
             address _token = _tokens[i];
             uint8 _percentage = _percentages[i];
