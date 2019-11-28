@@ -2,13 +2,13 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./Uniswap/UniswapExchangeInterface.sol";
-import "./Uniswap/UniswapFactoryInterface.sol";
+import "./Uniswap/IUniswapExchange.sol";
+import "./Uniswap/IUniswapFactory.sol";
 
 
 contract PortfolioManager is Ownable {
     using SafeMath for uint;
-    UniswapFactoryInterface factory;
+    IUniswapFactory factory;
 
     address[] public investments;
     address payable recipient;
@@ -18,7 +18,7 @@ contract PortfolioManager is Ownable {
     mapping(address=>uint8) percentages;
 
     constructor(address _factory) public {
-        factory = UniswapFactoryInterface(_factory);
+        factory = IUniswapFactory(_factory);
         recipient = msg.sender;
     }
 
@@ -26,7 +26,7 @@ contract PortfolioManager is Ownable {
         for (uint i = 0; i < investments.length; i++) {
             address token = investments[i];
             uint256 amountETH = msg.value.mul(percentages[token]).div(HUNDRED_PERCENT);
-            UniswapExchangeInterface exchange = UniswapExchangeInterface(factory.getExchange(token));
+            IUniswapExchange exchange = IUniswapExchange(factory.getExchange(token));
             uint256 minToken = exchange.getEthToTokenInputPrice(amountETH).mul(SWAP_THRESHOLD).div(100);
             exchange.ethToTokenTransferInput.value(amountETH)(minToken, deadline, owner());
         }
