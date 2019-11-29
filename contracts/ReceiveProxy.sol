@@ -6,7 +6,7 @@ import "./Uniswap/IUniswapExchange.sol";
 import "./Uniswap/IUniswapFactory.sol";
 
 
-contract PortfolioManager is Ownable {
+contract ReceiveProxy is Ownable {
     using SafeMath for uint;
     IUniswapFactory factory;
 
