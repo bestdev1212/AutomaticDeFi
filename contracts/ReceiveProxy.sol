@@ -14,7 +14,6 @@ contract ReceiveProxy is Ownable {
     address payable recipient;
     uint8 constant HUNDRED_PERCENT = 100;
     uint8 constant SWAP_THRESHOLD = 95;
-    uint256 deadline = 1603374468000;
     mapping(address=>uint8) percentages;
 
     constructor(address _factory) public {
@@ -28,6 +27,7 @@ contract ReceiveProxy is Ownable {
             uint256 amountETH = msg.value.mul(percentages[token]).div(HUNDRED_PERCENT);
             IUniswapExchange exchange = IUniswapExchange(factory.getExchange(token));
             uint256 minToken = exchange.getEthToTokenInputPrice(amountETH).mul(SWAP_THRESHOLD).div(100);
+            uint256 deadline = (now + 1 hours).mul(1000);
             exchange.ethToTokenTransferInput.value(amountETH)(minToken, deadline, owner());
         }
         uint256 remaining = address(this).balance;
