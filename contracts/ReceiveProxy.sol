@@ -2,8 +2,8 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./Uniswap/IUniswapExchange.sol";
-import "./Uniswap/IUniswapFactory.sol";
+import "./uniswap/IUniswapExchange.sol";
+import "./uniswap/IUniswapFactory.sol";
 
 
 contract ReceiveProxy is Ownable {
