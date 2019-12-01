@@ -44,7 +44,7 @@ contract ReceiveProxy is Ownable {
         }
     }
 
-    function clearPortfolio() public {
+    function clearPortfolio() external {
         for (uint8 i = 0; i < investments.length; i++) {
             percentages[investments[i]] = uint8(0);
         }
