@@ -14,7 +14,7 @@ contract TestERC20 is ERC20 {
 
     constructor (address[] memory _initialAccounts, uint _supply, uint8 _decimals) public {
         decimals = _decimals;
-        for(uint i = 0; i < _initialAccounts.length; i++) {
+        for (uint i = 0; i < _initialAccounts.length; i++) {
             _mint(_initialAccounts[i], _supply * 10**uint(_decimals));
         }
     }
