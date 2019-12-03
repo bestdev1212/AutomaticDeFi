@@ -6,6 +6,9 @@ import "./uniswap/IUniswapExchange.sol";
 import "./uniswap/IUniswapFactory.sol";
 
 
+/**
+ * @dev Automatically split funds, exchange them to ERC20s upon receival.
+ */
 contract ReceiveProxy is Ownable {
     using SafeMath for uint;
     IUniswapFactory factory;
@@ -18,10 +21,17 @@ contract ReceiveProxy is Ownable {
 
     uint8 constant SWAP_THRESHOLD = 95;
 
+
+    /**
+     * @dev Initializes the contract setting the Uniswap factory.
+     */
     constructor(address _factory) public {
         factory = IUniswapFactory(_factory);
     }
 
+    /**
+     * @dev Split the fund upon receival.
+     */
     function() external payable {
         for (uint i = 0; i < splitKeys.length; i++) {
             bytes32 splitKey = splitKeys[i];
@@ -34,6 +44,9 @@ contract ReceiveProxy is Ownable {
         }
     }
 
+    /**
+     * @dev Add a splitting target
+     */
     function addSplit(address _asset, address _recipient, uint8 _percentage) external onlyOwner {
         bytes32 hashKey = keccak256(abi.encodePacked(_asset, _recipient, _percentage));
         splitKeys.push(hashKey);
@@ -42,6 +55,9 @@ contract ReceiveProxy is Ownable {
         percentages[hashKey] = _percentage;
     }
 
+    /**
+     * @dev Add an array of splitting targets
+     */
     function addSplits(
         address[] calldata _assets,
         address[] calldata _recipients,
@@ -59,6 +75,9 @@ contract ReceiveProxy is Ownable {
 
     }
 
+    /**
+     * @dev Delete a spliting target from the array
+     */
     function _deleteSplit(uint index) external onlyOwner {
         require(index < splitKeys.length);
         bytes32 key = splitKeys[index];
