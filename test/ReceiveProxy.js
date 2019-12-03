@@ -13,7 +13,7 @@ contract("ReceiveProxy", accounts => {
 
   let factory, testToken, testTokenExchange;
 
-  before("Deploy Uniswap Factory and Exchange" ,async()=>{
+  before("Setup Uniswap factory and exchange" ,async()=>{
     
     await UniswapFactory.deployed();
     await TestERC20.deployed()
