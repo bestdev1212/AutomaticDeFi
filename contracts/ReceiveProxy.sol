@@ -11,17 +11,22 @@ import "./uniswap/IUniswapFactory.sol";
  */
 contract ReceiveProxy is Ownable {
     using SafeMath for uint;
-    IUniswapFactory factory;
 
     bytes32[] public splitKeys;
+    uint8 public sumPercentage;
+    uint8 constant SWAP_THRESHOLD = 95;
 
     mapping(bytes32=>address) public assets;
     mapping(bytes32=>address) public recipients;
     mapping(bytes32=>uint8) public percentages;
-    uint8 public sumPercentage;
 
-    uint8 constant SWAP_THRESHOLD = 95;
+    IUniswapFactory factory;
 
+    /**
+     * Events
+     */
+    event NewSplit (address asset, address recipient, uint8 percentage);
+    event NewSplits (address[] assets, address[] recipients, uint8[] percentages);
 
     /**
      * @dev Initializes the contract setting the Uniswap factory.
@@ -51,6 +56,8 @@ contract ReceiveProxy is Ownable {
      */
     function addSplit(address _asset, address _recipient, uint8 _percentage) external onlyOwner {
         require(sumPercentage + _percentage <= 100, "Total percentage must < 100");
+        if (_percentage <= 0)
+            return;
         sumPercentage += _percentage;
 
         bytes32 hashKey = keccak256(abi.encodePacked(_asset, _recipient, _percentage));
@@ -58,6 +65,8 @@ contract ReceiveProxy is Ownable {
         assets[hashKey] = _asset;
         recipients[hashKey] = _recipient;
         percentages[hashKey] = _percentage;
+
+        emit NewSplit(_asset, _recipient, _percentage);
     }
 
     /**
@@ -71,6 +80,7 @@ contract ReceiveProxy is Ownable {
     onlyOwner
     {
         for (uint i = 0; i < _assets.length; i++) {
+            require(_percentages[i] > 0, "Percentage cannot be negative");
             require(sumPercentage + _percentages[i] <= 100, "Total percentage must < 100");
             sumPercentage += _percentages[i];
 
@@ -81,6 +91,7 @@ contract ReceiveProxy is Ownable {
             percentages[hashKey] = _percentages[i];
         }
 
+        emit NewSplits(_assets, _recipients, _percentages);
     }
 
     /**
