@@ -86,7 +86,7 @@ contract ReceiveProxy is Ownable {
     /**
      * @dev Delete a spliting target from the array
      */
-    function _deleteSplit(uint index) external onlyOwner {
+    function deleteSplit(uint index) external onlyOwner {
         require(index < splitKeys.length);
         bytes32 key = splitKeys[index];
         sumPercentage -= percentages[key];

@@ -1,5 +1,4 @@
 const Web3 =require('web3')
-
 const web3 = new Web3()
 
 const ReceiveProxy = artifacts.require("ReceiveProxy");
@@ -25,13 +24,39 @@ contract("ReceiveProxy", accounts => {
     await testToken.approve(tokenExchangeAddr, web3.utils.toWei('15', 'ether'))
 
     const deadline = Math.round((new Date()).getTime() + 3600000)
-    await testTokenExchange.addLiquidity(0, 10000, deadline, { value: web3.utils.toWei('10', 'ether') })
+    await testTokenExchange.addLiquidity(0, 10000, deadline, { value: web3.utils.toWei('0.1', 'ether') })
   })
 
-  it('should run', async()=>{
+  it('should add percentage', async()=>{
     const proxy = await ReceiveProxy.deployed();
-    
+    await proxy.addSplit(testToken.address, accounts[0], 30);
+    const sumPercentage = await proxy.sumPercentage();
+    assert.equal(
+      sumPercentage,
+      30,
+      "Must be previously set percentage"
+    )
   })
   
+  it('should delete target split', async()=>{
+    const proxy = await ReceiveProxy.deployed();
+    const idx = 0
+    const key = await proxy.splitKeys(idx);
+    await proxy.deleteSplit(idx);
+
+    const sumPercentage = await proxy.sumPercentage();
+    assert.equal(
+      sumPercentage,
+      0,
+      "sumPercentage should be 0"
+    )
+
+    const asset = await proxy.assets(key);
+    assert.equal(
+      asset,
+      0,
+      "asset map should be empty at position [key]"
+    )
+  })
 
 })
