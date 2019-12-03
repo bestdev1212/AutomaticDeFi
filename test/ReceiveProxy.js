@@ -57,6 +57,20 @@ contract("ReceiveProxy", accounts => {
       0,
       "asset map should be empty at position [key]"
     )
+
+    const recipient = await proxy.recipients(key);
+    assert.equal(
+      recipient,
+      0,
+      "recipient map should be empty at position [key]"
+    )
+
+    const percentage = await proxy.percentages(key);
+    assert.equal(
+      percentage,
+      0,
+      "percentage map should be empty at position [key]"
+    )
   })
 
 })
