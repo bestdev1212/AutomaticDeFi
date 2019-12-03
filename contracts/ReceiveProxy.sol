@@ -18,6 +18,7 @@ contract ReceiveProxy is Ownable {
     mapping(bytes32=>address) public assets;
     mapping(bytes32=>address) public recipients;
     mapping(bytes32=>uint8) public percentages;
+    uint8 sumPercentage;
 
     uint8 constant SWAP_THRESHOLD = 95;
 
@@ -26,6 +27,7 @@ contract ReceiveProxy is Ownable {
      * @dev Initializes the contract setting the Uniswap factory.
      */
     constructor(address _factory) public {
+        sumPercentage = 0;
         factory = IUniswapFactory(_factory);
     }
 
@@ -48,6 +50,9 @@ contract ReceiveProxy is Ownable {
      * @dev Add a splitting target
      */
     function addSplit(address _asset, address _recipient, uint8 _percentage) external onlyOwner {
+        require(sumPercentage + _percentage <= 100, "Total percentage must < 100");
+        sumPercentage += _percentage;
+
         bytes32 hashKey = keccak256(abi.encodePacked(_asset, _recipient, _percentage));
         splitKeys.push(hashKey);
         assets[hashKey] = _asset;
@@ -66,6 +71,9 @@ contract ReceiveProxy is Ownable {
     onlyOwner
     {
         for (uint i = 0; i < _assets.length; i++) {
+            require(sumPercentage + _percentages[i] <= 100, "Total percentage must < 100");
+            sumPercentage += _percentages[i];
+
             bytes32 hashKey = keccak256(abi.encodePacked(_assets[i], _recipients[i], _percentages[i]));
             splitKeys.push(hashKey);
             assets[hashKey] = _assets[i];
@@ -81,6 +89,7 @@ contract ReceiveProxy is Ownable {
     function _deleteSplit(uint index) external onlyOwner {
         require(index < splitKeys.length);
         bytes32 key = splitKeys[index];
+        sumPercentage -= percentages[key];
         delete percentages[key];
         delete recipients[key];
         delete assets[key];
