@@ -18,7 +18,7 @@ contract ReceiveProxy is Ownable {
     mapping(bytes32=>address) public assets;
     mapping(bytes32=>address) public recipients;
     mapping(bytes32=>uint8) public percentages;
-    uint8 sumPercentage;
+    uint8 public sumPercentage;
 
     uint8 constant SWAP_THRESHOLD = 95;
 
