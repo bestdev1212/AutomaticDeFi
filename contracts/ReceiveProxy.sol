@@ -34,19 +34,37 @@ contract ReceiveProxy is Ownable {
         }
     }
 
-    function addSplits(address[] calldata _assets, address[] calldata _receipients, uint8[] calldata _percentages) external {
+    function addSplit(address _asset, address _recipient, uint8 _percentage) external onlyOwner {
+        bytes32 hashKey = keccak256(abi.encodePacked(_asset, _recipient, _percentage));
+        splitKeys.push(hashKey);
+        assets[hashKey] = _asset;
+        recipients[hashKey] = _recipient;
+        percentages[hashKey] = _percentage;
+    }
+
+    function addSplits(
+        address[] calldata _assets,
+        address[] calldata _recipients,
+        uint8[] calldata _percentages)
+    external
+    onlyOwner
+    {
         for (uint i = 0; i < _assets.length; i++) {
-            bytes32 hashKey = keccak256(abi.encodePacked(_assets[i], _receipients[i], _percentages[i]));
+            bytes32 hashKey = keccak256(abi.encodePacked(_assets[i], _recipients[i], _percentages[i]));
             splitKeys.push(hashKey);
             assets[hashKey] = _assets[i];
-            recipients[hashKey] = _receipients[i];
+            recipients[hashKey] = _recipients[i];
             percentages[hashKey] = _percentages[i];
         }
 
     }
 
-    function _deleteSplit(uint index) internal {
+    function _deleteSplit(uint index) external onlyOwner {
         require(index < splitKeys.length);
+        bytes32 key = splitKeys[index];
+        delete percentages[key];
+        delete recipients[key];
+        delete assets[key];
         splitKeys[index] = splitKeys[splitKeys.length-1];
         delete splitKeys[splitKeys.length-1];
         splitKeys.length--;
