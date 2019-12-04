@@ -57,6 +57,13 @@ contract ReceiveProxy is Ownable {
     }
 
     /**
+     * @dev Withdraw eth balance from contract
+     */
+    function withdraw() external onlyOwner {
+        msg.sender.transfer(address(this).balance);
+    }
+
+    /**
      * @dev Add a splitting target
      */
     function addSplit(address _asset, address payable _recipient, uint8 _percentage) external onlyOwner {
