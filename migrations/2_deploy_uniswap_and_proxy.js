@@ -6,9 +6,9 @@ const TestERC20 = artifacts.require('TestERC20')
 
 const deploy = async (deployer, network, accounts) => {
 
-  const _ = await deployer.deploy(TestERC20, [accounts[0]], 100000, 10);    
+  const _ = await deployer.deploy(TestERC20, [accounts[0]], 100000, 18);    
   
-  const testToken = await deployer.deploy(TestERC20, [accounts[0]], 100000, 10);    
+  const testToken = await deployer.deploy(TestERC20, [accounts[0]], 100000, 18);    
 
   switch(network) {
     case 'development': {       
