@@ -17,7 +17,7 @@ contract ReceiveProxy is Ownable {
     uint8 constant SWAP_THRESHOLD = 95;
 
     mapping(bytes32=>address) public assets;
-    mapping(bytes32=>address) public recipients;
+    mapping(bytes32=>address payable) public recipients;
     mapping(bytes32=>uint8) public percentages;
 
     IUniswapFactory factory;
@@ -25,8 +25,8 @@ contract ReceiveProxy is Ownable {
     /**
      * Events
      */
-    event NewSplit (address asset, address recipient, uint8 percentage);
-    event NewSplits (address[] assets, address[] recipients, uint8[] percentages);
+    event NewSplit (address asset, address payable recipient, uint8 percentage);
+    event NewSplits (address[] assets, address payable[] recipients, uint8[] percentages);
 
     /**
      * @dev Initializes the contract setting the Uniswap factory.
@@ -43,18 +43,23 @@ contract ReceiveProxy is Ownable {
         for (uint i = 0; i < splitKeys.length; i++) {
             bytes32 splitKey = splitKeys[i];
             address token = assets[splitKey];
+            address payable recipeint = recipients[splitKey];
             uint256 amountETH = msg.value.mul(percentages[splitKey]).div(100);
+            if (token == address(0)) {
+                recipeint.transfer(amountETH); // transaction reverted
+                continue;
+            }
             IUniswapExchange exchange = IUniswapExchange(factory.getExchange(token));
             uint256 minToken = exchange.getEthToTokenInputPrice(amountETH).mul(SWAP_THRESHOLD).div(100);
             uint256 deadline = (now + 1 hours).mul(1000);
-            exchange.ethToTokenTransferInput.value(amountETH)(minToken, deadline, owner());
+            exchange.ethToTokenTransferInput.value(amountETH)(minToken, deadline, recipeint);
         }
     }
 
     /**
      * @dev Add a splitting target
      */
-    function addSplit(address _asset, address _recipient, uint8 _percentage) external onlyOwner {
+    function addSplit(address _asset, address payable _recipient, uint8 _percentage) external onlyOwner {
         require(sumPercentage + _percentage <= 100, "Total percentage must < 100");
         if (_percentage <= 0)
             return;
@@ -74,7 +79,7 @@ contract ReceiveProxy is Ownable {
      */
     function addSplits(
         address[] calldata _assets,
-        address[] calldata _recipients,
+        address payable[] calldata _recipients,
         uint8[] calldata _percentages)
     external
     onlyOwner
