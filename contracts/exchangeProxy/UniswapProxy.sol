@@ -28,4 +28,9 @@ contract UniswapProxy is ExchangeProxy {
         exchange.ethToTokenTransferInput.value(msg.value)(minToken, deadline, _recipient);
     }
 
+    function setThreshold(uint8 _threshold) external {
+        require(_threshold > 0 && _threshold < 100, "");
+        thresholds[msg.sender] = _threshold;
+    }
+
 }
