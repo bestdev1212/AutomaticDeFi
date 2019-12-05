@@ -22,6 +22,7 @@ const deploy = async (deployer, network, accounts) => {
       // uniswap proxy that handle spliting for all wallets
       await deployer.deploy(UniswapProxy, uniswapFactory.address);
 
+      // deploy a proxy wallet for testing
       await deployer.deploy(ReceiveProxy);
       break;
     } 
