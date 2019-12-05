@@ -2,6 +2,8 @@ const ReceiveProxy = artifacts.require("ReceiveProxy");
 
 const UniswapFactory = artifacts.require('UniswapFactory')
 const UniswapExchange = artifacts.require('UniswapExchange')
+const UniswapProxy = artifacts.require('UniswapProxy')
+
 const TestERC20 = artifacts.require('TestERC20')
 
 const deploy = async (deployer, network, accounts) => {
@@ -16,13 +18,19 @@ const deploy = async (deployer, network, accounts) => {
       const uniswapExchangeTemplate = await deployer.deploy(UniswapExchange);
       await uniswapFactory.initializeFactory(uniswapExchangeTemplate.address);
       await uniswapFactory.createExchange(testToken.address)
-      await deployer.deploy(ReceiveProxy, uniswapFactory.address);
+
+      // uniswap proxy that handle spliting for all wallets
+      await deployer.deploy(UniswapProxy, uniswapFactory.address);
+
+      await deployer.deploy(ReceiveProxy);
       break;
     } 
     case 'rinkeby': {
       const config = require('../util/config/rinkeby.json')
-      const uniswapFactoryAddress = config.uniswap.factory  
-      await deployer.deploy(ReceiveProxy, uniswapFactoryAddress);
+      const uniswapFactoryAddress = config.uniswap.factory
+      
+      await deployer.deploy(UniswapProxy, uniswapFactoryAddress);
+      await deployer.deploy(ReceiveProxy);
       break;
     }
   }
