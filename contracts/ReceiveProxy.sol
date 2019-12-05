@@ -2,8 +2,9 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./uniswap/IUniswapExchange.sol";
-import "./uniswap/IUniswapFactory.sol";
+import "./exchange/ExchangeProxy.sol";
+// import "./uniswap/IUniswapExchange.sol";
+// import "./uniswap/IUniswapFactory.sol";
 
 
 /**
@@ -14,26 +15,23 @@ contract ReceiveProxy is Ownable {
 
     bytes32[] public splitKeys;
     uint8 public sumPercentage;
-    uint8 constant SWAP_THRESHOLD = 95;
 
     mapping(bytes32=>address) public assets;
     mapping(bytes32=>address payable) public recipients;
     mapping(bytes32=>uint8) public percentages;
-
-    IUniswapFactory factory;
+    mapping(bytes32=>address) public exchanges;
 
     /**
      * Events
      */
-    event NewSplit (address asset, address payable recipient, uint8 percentage);
-    event NewSplits (address[] assets, address payable[] recipients, uint8[] percentages);
+    event NewSplit (address asset, address payable recipient, uint8 percentage, address exchangeProxy);
+    event NewSplits (address[] assets, address payable[] recipients, uint8[] percentages, address[] exchangeProxies);
 
     /**
-     * @dev Initializes the contract setting the Uniswap factory.
+     * @dev Initializes the contract.
      */
-    constructor(address _factory) public {
+    constructor() public {
         sumPercentage = 0;
-        factory = IUniswapFactory(_factory);
     }
 
     /**
@@ -49,10 +47,8 @@ contract ReceiveProxy is Ownable {
                 recipeint.transfer(amountETH); // transaction reverted
                 continue;
             }
-            IUniswapExchange exchange = IUniswapExchange(factory.getExchange(token));
-            uint256 minToken = exchange.getEthToTokenInputPrice(amountETH).mul(SWAP_THRESHOLD).div(100);
-            uint256 deadline = (now + 1 hours).mul(1000);
-            exchange.ethToTokenTransferInput.value(amountETH)(minToken, deadline, recipeint);
+            ExchangeProxy exchange = ExchangeProxy(exchanges[splitKey]);
+            exchange.split.value(amountETH)(token, recipeint);
         }
     }
 
@@ -66,7 +62,15 @@ contract ReceiveProxy is Ownable {
     /**
      * @dev Add a splitting target
      */
-    function addSplit(address _asset, address payable _recipient, uint8 _percentage) external onlyOwner {
+    function addSplit(
+        address _asset,
+        address payable _recipient,
+        address _exchangeProxy,
+        uint8 _percentage
+    )
+    external
+    onlyOwner
+    {
         require(sumPercentage + _percentage <= 100, "Total percentage must < 100");
         if (_percentage <= 0)
             return;
@@ -77,8 +81,9 @@ contract ReceiveProxy is Ownable {
         assets[hashKey] = _asset;
         recipients[hashKey] = _recipient;
         percentages[hashKey] = _percentage;
+        exchanges[hashKey] = _exchangeProxy;
 
-        emit NewSplit(_asset, _recipient, _percentage);
+        emit NewSplit(_asset, _recipient, _percentage, _exchangeProxy);
     }
 
     /**
@@ -87,7 +92,9 @@ contract ReceiveProxy is Ownable {
     function addSplits(
         address[] calldata _assets,
         address payable[] calldata _recipients,
-        uint8[] calldata _percentages)
+        address[] calldata _exchangeProxies,
+        uint8[] calldata _percentages
+    )
     external
     onlyOwner
     {
@@ -96,14 +103,21 @@ contract ReceiveProxy is Ownable {
             require(sumPercentage + _percentages[i] <= 100, "Total percentage must < 100");
             sumPercentage += _percentages[i];
 
-            bytes32 hashKey = keccak256(abi.encodePacked(_assets[i], _recipients[i], _percentages[i]));
+            bytes32 hashKey = keccak256(
+                abi.encodePacked(
+                    _assets[i],
+                    _recipients[i],
+                    _percentages[i],
+                    _exchangeProxies[i]
+            ));
             splitKeys.push(hashKey);
             assets[hashKey] = _assets[i];
             recipients[hashKey] = _recipients[i];
             percentages[hashKey] = _percentages[i];
+            exchanges[hashKey] = _exchangeProxies[i];
         }
 
-        emit NewSplits(_assets, _recipients, _percentages);
+        emit NewSplits(_assets, _recipients, _percentages, _exchangeProxies);
     }
 
     /**
