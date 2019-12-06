@@ -3,8 +3,6 @@ pragma solidity ^0.5.0;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./exchange/ExchangeProxy.sol";
-// import "./uniswap/IUniswapExchange.sol";
-// import "./uniswap/IUniswapFactory.sol";
 
 
 /**
@@ -16,16 +14,19 @@ contract ReceiveProxy is Ownable {
     bytes32[] public splitKeys;
     uint8 public sumPercentage;
 
+    /**
+     * Mapping for a splits
+     */
     mapping(bytes32=>address) public assets;
     mapping(bytes32=>address payable) public recipients;
-    mapping(bytes32=>uint8) public percentages;
     mapping(bytes32=>address) public exchanges;
+    mapping(bytes32=>uint8) public percentages;
 
     /**
      * Events
      */
-    event NewSplit (address asset, address payable recipient, uint8 percentage, address exchangeProxy);
-    event NewSplits (address[] assets, address payable[] recipients, uint8[] percentages, address[] exchangeProxies);
+    event NewSplit (address asset, address payable recipient, address exchangeProxy, uint8 percentage);
+    event NewSplits (address[] assets, address payable[] recipients, address[] exchangeProxies, uint8[] percentages);
 
     /**
      * @dev Initializes the contract.
@@ -83,7 +84,7 @@ contract ReceiveProxy is Ownable {
         percentages[hashKey] = _percentage;
         exchanges[hashKey] = _exchangeProxy;
 
-        emit NewSplit(_asset, _recipient, _percentage, _exchangeProxy);
+        emit NewSplit(_asset, _recipient, _exchangeProxy, _percentage);
     }
 
     /**
@@ -117,7 +118,7 @@ contract ReceiveProxy is Ownable {
             exchanges[hashKey] = _exchangeProxies[i];
         }
 
-        emit NewSplits(_assets, _recipients, _percentages, _exchangeProxies);
+        emit NewSplits(_assets, _recipients, _exchangeProxies, _percentages);
     }
 
     /**
