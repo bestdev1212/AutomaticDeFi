@@ -13,6 +13,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract UniswapProxy is ExchangeProxy {
     using SafeMath for uint;
 
+    uint8 constant DEFAULT_THRESHOLD = 98;
     mapping(address=>uint8) thresholds;
     IUniswapFactory factory;
 
@@ -23,7 +24,11 @@ contract UniswapProxy is ExchangeProxy {
     function split(address _targetToken, address _recipient) external payable {
         IUniswapExchange exchange = IUniswapExchange(factory.getExchange(_targetToken));
         // solium-disable-next-line security/no-tx-origin
-        uint256 minToken = exchange.getEthToTokenInputPrice(msg.value).mul(thresholds[tx.origin]).div(100);
+        uint8 threshold = thresholds[tx.origin];
+        if (threshold == 0) {
+            threshold = DEFAULT_THRESHOLD;
+        }
+        uint256 minToken = exchange.getEthToTokenInputPrice(msg.value).mul(threshold).div(100);
         uint256 deadline = (now + 1 hours).mul(1000);
         exchange.ethToTokenTransferInput.value(msg.value)(minToken, deadline, _recipient);
     }
