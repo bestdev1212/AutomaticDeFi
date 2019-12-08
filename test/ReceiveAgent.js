@@ -37,7 +37,7 @@ contract("ReceiveAgent", accounts => {
 
   it('should add percentage', async()=>{
     const proxy = await ReceiveAgent.deployed();
-    await proxy.addSplit(testToken.address, accounts[0], UniswapProxy.address, 30);
+    await proxy.addRule(testToken.address, accounts[0], UniswapProxy.address, 30);
     const sumPercentage = await proxy.sumPercentage();
     assert.equal(
       sumPercentage,
@@ -46,11 +46,11 @@ contract("ReceiveAgent", accounts => {
     )
   })
   
-  it('should delete target split', async()=>{
+  it('should delete target split rule', async()=>{
     const proxy = await ReceiveAgent.deployed();
     const idx = 0
-    const key = await proxy.splitKeys(idx);
-    await proxy.deleteSplit(idx);
+    const key = await proxy.ruleKeys(idx);
+    await proxy.deleteRule(idx);
 
     const sumPercentage = await proxy.sumPercentage();
     assert.equal(
@@ -88,8 +88,8 @@ contract("ReceiveAgent", accounts => {
     const account2TokenRatio = 60
 
     const proxy = await ReceiveAgent.deployed()
-    await proxy.addSplit(ZERO_ADDRESS, accounts[1], ZERO_ADDRESS, account1EthRatio)
-    await proxy.addSplit(testToken.address, accounts[2], UniswapProxy.address, account2TokenRatio)
+    await proxy.addRule(ZERO_ADDRESS, accounts[1], ZERO_ADDRESS, account1EthRatio)
+    await proxy.addRule(testToken.address, accounts[2], UniswapProxy.address, account2TokenRatio)
 
     const account1EthBalance = await web3.eth.getBalance(accounts[1])
     

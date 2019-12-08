@@ -11,11 +11,11 @@ import "./exchange/ExchangeProxy.sol";
 contract ReceiveAgent is Ownable {
     using SafeMath for uint;
 
-    bytes32[] public splitKeys;
+    bytes32[] public ruleKeys;
     uint8 public sumPercentage;
 
     /**
-     * Mapping for a splits
+     * Mapping for rules
      */
     mapping(bytes32=>address) public assets;
     mapping(bytes32=>address payable) public recipients;
@@ -25,8 +25,8 @@ contract ReceiveAgent is Ownable {
     /**
      * Events
      */
-    event NewSplit (address asset, address payable recipient, address exchangeProxy, uint8 percentage);
-    event NewSplits (address[] assets, address payable[] recipients, address[] exchangeProxies, uint8[] percentages);
+    event NewRule (address asset, address payable recipient, address exchangeProxy, uint8 percentage);
+    event NewRules (address[] assets, address payable[] recipients, address[] exchangeProxies, uint8[] percentages);
 
     /**
      * @dev Initializes the contract.
@@ -39,16 +39,16 @@ contract ReceiveAgent is Ownable {
      * @dev Split the fund upon receival.
      */
     function() external payable {
-        for (uint i = 0; i < splitKeys.length; i++) {
-            bytes32 splitKey = splitKeys[i];
-            address token = assets[splitKey];
-            address payable recipeint = recipients[splitKey];
-            uint256 amountETH = msg.value.mul(percentages[splitKey]).div(100);
+        for (uint i = 0; i < ruleKeys.length; i++) {
+            bytes32 ruleKey = ruleKeys[i];
+            address token = assets[ruleKey];
+            address payable recipeint = recipients[ruleKey];
+            uint256 amountETH = msg.value.mul(percentages[ruleKey]).div(100);
             if (token == address(0)) {
                 recipeint.transfer(amountETH); // transaction reverted
                 continue;
             }
-            ExchangeProxy exchange = ExchangeProxy(exchanges[splitKey]);
+            ExchangeProxy exchange = ExchangeProxy(exchanges[ruleKey]);
             exchange.split.value(amountETH)(token, recipeint);
         }
     }
@@ -61,9 +61,9 @@ contract ReceiveAgent is Ownable {
     }
 
     /**
-     * @dev Add a splitting target
+     * @dev Add a splitting rule
      */
-    function addSplit(
+    function addRule(
         address _asset,
         address payable _recipient,
         address _exchangeProxy,
@@ -78,19 +78,19 @@ contract ReceiveAgent is Ownable {
         sumPercentage += _percentage;
 
         bytes32 hashKey = keccak256(abi.encodePacked(_asset, _recipient, _percentage));
-        splitKeys.push(hashKey);
+        ruleKeys.push(hashKey);
         assets[hashKey] = _asset;
         recipients[hashKey] = _recipient;
         percentages[hashKey] = _percentage;
         exchanges[hashKey] = _exchangeProxy;
 
-        emit NewSplit(_asset, _recipient, _exchangeProxy, _percentage);
+        emit NewRule(_asset, _recipient, _exchangeProxy, _percentage);
     }
 
     /**
-     * @dev Add an array of splitting targets
+     * @dev Add an array of splitting rules
      */
-    function addSplits(
+    function addRules(
         address[] calldata _assets,
         address payable[] calldata _recipients,
         address[] calldata _exchangeProxies,
@@ -111,28 +111,28 @@ contract ReceiveAgent is Ownable {
                     _percentages[i],
                     _exchangeProxies[i]
             ));
-            splitKeys.push(hashKey);
+            ruleKeys.push(hashKey);
             assets[hashKey] = _assets[i];
             recipients[hashKey] = _recipients[i];
             percentages[hashKey] = _percentages[i];
             exchanges[hashKey] = _exchangeProxies[i];
         }
 
-        emit NewSplits(_assets, _recipients, _exchangeProxies, _percentages);
+        emit NewRules(_assets, _recipients, _exchangeProxies, _percentages);
     }
 
     /**
      * @dev Delete a spliting target from the array
      */
-    function deleteSplit(uint index) external onlyOwner {
-        require(index < splitKeys.length);
-        bytes32 key = splitKeys[index];
+    function deleteRule(uint index) external onlyOwner {
+        require(index < ruleKeys.length);
+        bytes32 key = ruleKeys[index];
         sumPercentage -= percentages[key];
         delete percentages[key];
         delete recipients[key];
         delete assets[key];
-        splitKeys[index] = splitKeys[splitKeys.length-1];
-        delete splitKeys[splitKeys.length-1];
-        splitKeys.length--;
+        ruleKeys[index] = ruleKeys[ruleKeys.length-1];
+        delete ruleKeys[ruleKeys.length-1];
+        ruleKeys.length--;
     }
 }
