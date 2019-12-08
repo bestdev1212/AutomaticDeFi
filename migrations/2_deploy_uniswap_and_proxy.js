@@ -1,4 +1,4 @@
-const ReceiveProxy = artifacts.require("ReceiveProxy");
+const ReceiveAgent = artifacts.require("ReceiveAgent");
 
 const UniswapFactory = artifacts.require('UniswapFactory')
 const UniswapExchange = artifacts.require('UniswapExchange')
@@ -23,7 +23,7 @@ const deploy = async (deployer, network, accounts) => {
       await deployer.deploy(UniswapProxy, uniswapFactory.address);
 
       // deploy a proxy wallet for testing
-      await deployer.deploy(ReceiveProxy);
+      await deployer.deploy(ReceiveAgent);
       break;
     } 
     case 'rinkeby': {
@@ -31,7 +31,7 @@ const deploy = async (deployer, network, accounts) => {
       const uniswapFactoryAddress = config.uniswap.factory
       
       await deployer.deploy(UniswapProxy, uniswapFactoryAddress);
-      await deployer.deploy(ReceiveProxy);
+      await deployer.deploy(ReceiveAgent);
       break;
     }
   }

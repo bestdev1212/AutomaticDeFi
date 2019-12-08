@@ -2,7 +2,7 @@ const Web3 =require('web3')
 const web3 = new Web3('http://localhost:8545')
 
 // const ganache = require('ganache-cli')
-const ReceiveProxy = artifacts.require("ReceiveProxy");
+const ReceiveAgent = artifacts.require("ReceiveAgent");
 const UniswapFactory = artifacts.require('UniswapFactory')
 const UniswapProxy = artifacts.require('UniswapProxy')
 const IUniswapFactory = artifacts.require('IUniswapFactory')
@@ -11,7 +11,7 @@ const TestERC20 = artifacts.require('TestERC20')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-contract("ReceiveProxy", accounts => {
+contract("ReceiveAgent", accounts => {
 
   let factory, testToken, testTokenExchange, uniswapProxy;
 
@@ -36,7 +36,7 @@ contract("ReceiveProxy", accounts => {
   })
 
   it('should add percentage', async()=>{
-    const proxy = await ReceiveProxy.deployed();
+    const proxy = await ReceiveAgent.deployed();
     await proxy.addSplit(testToken.address, accounts[0], UniswapProxy.address, 30);
     const sumPercentage = await proxy.sumPercentage();
     assert.equal(
@@ -47,7 +47,7 @@ contract("ReceiveProxy", accounts => {
   })
   
   it('should delete target split', async()=>{
-    const proxy = await ReceiveProxy.deployed();
+    const proxy = await ReceiveAgent.deployed();
     const idx = 0
     const key = await proxy.splitKeys(idx);
     await proxy.deleteSplit(idx);
@@ -87,7 +87,7 @@ contract("ReceiveProxy", accounts => {
     const account1EthRatio = 30
     const account2TokenRatio = 60
 
-    const proxy = await ReceiveProxy.deployed()
+    const proxy = await ReceiveAgent.deployed()
     await proxy.addSplit(ZERO_ADDRESS, accounts[1], ZERO_ADDRESS, account1EthRatio)
     await proxy.addSplit(testToken.address, accounts[2], UniswapProxy.address, account2TokenRatio)
 

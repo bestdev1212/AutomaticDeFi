@@ -8,7 +8,7 @@ import "./exchange/ExchangeProxy.sol";
 /**
  * @dev Automatically split funds, exchange them to ERC20s upon receival.
  */
-contract ReceiveProxy is Ownable {
+contract ReceiveAgent is Ownable {
     using SafeMath for uint;
 
     bytes32[] public splitKeys;
