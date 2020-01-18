@@ -3,12 +3,13 @@ pragma solidity ^0.5.0;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./exchange/ExchangeProxy.sol";
+import "./CloneFactory.sol";
 
 
 /**
  * @dev Automatically split funds, exchange them to ERC20s upon receival.
  */
-contract ReceiveAgent is Ownable {
+contract ReceiveAgent is Ownable, CloneFactory {
     using SafeMath for uint;
 
     bytes32[] public ruleKeys;
