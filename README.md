@@ -1,3 +1,3 @@
-# ETH Receival Proxy
+# ETH Receival Agent
 
-Proxy Account to deal with fund spliting and auto investment to ERC20/ Compound and other DeFi Application.
+A Agent Contract to deal with fund spliting and auto investment to ERC20/ Compound and other DeFi Application.
