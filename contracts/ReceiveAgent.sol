@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+// import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./exchange/ExchangeProxy.sol";
 
@@ -8,11 +8,12 @@ import "./exchange/ExchangeProxy.sol";
 /**
  * @dev Automatically split funds, exchange them to ERC20s upon receival.
  */
-contract ReceiveAgent is Ownable {
+contract ReceiveAgent {
     using SafeMath for uint;
 
     bytes32[] public ruleKeys;
-    uint8 public sumPercentage;
+    uint8 public sumPercentage = 0;
+    address public owner;
 
     /**
      * Mapping for rules
@@ -29,10 +30,11 @@ contract ReceiveAgent is Ownable {
     event NewRules (address[] assets, address payable[] recipients, address[] exchangeProxies, uint8[] percentages);
 
     /**
-     * @dev Initializes the contract.
+     * @dev Throws if the sender is not the owner.
      */
-    constructor() public {
-        sumPercentage = 0;
+    modifier onlyOwner {
+        require(msg.sender == owner, "RA: msg.sender must be the owner");
+        _;
     }
 
     /**
@@ -51,6 +53,11 @@ contract ReceiveAgent is Ownable {
             ExchangeProxy exchange = ExchangeProxy(exchanges[ruleKey]);
             exchange.split.value(amountETH)(token, recipeint);
         }
+    }
+
+    function init(address _owner) external {
+        require(owner == address(0), "RA: Wallet already initialised");
+        owner = _owner;
     }
 
     /**
@@ -72,7 +79,7 @@ contract ReceiveAgent is Ownable {
     external
     onlyOwner
     {
-        require(sumPercentage + _percentage <= 100, "Total percentage must < 100");
+        require(sumPercentage + _percentage <= 100, "RA: Total percentage must < 100");
         if (_percentage <= 0)
             return;
         sumPercentage += _percentage;
@@ -100,8 +107,8 @@ contract ReceiveAgent is Ownable {
     onlyOwner
     {
         for (uint i = 0; i < _assets.length; i++) {
-            require(_percentages[i] > 0, "Percentage cannot be negative");
-            require(sumPercentage + _percentages[i] <= 100, "Total percentage must < 100");
+            require(_percentages[i] > 0, "RA: Percentage cannot be negative");
+            require(sumPercentage + _percentages[i] <= 100, "RA: Total percentage must < 100");
             sumPercentage += _percentages[i];
 
             bytes32 hashKey = keccak256(
