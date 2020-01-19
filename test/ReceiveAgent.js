@@ -3,6 +3,8 @@ const web3 = new Web3('http://localhost:8545')
 
 // const ganache = require('ganache-cli')
 const ReceiveAgent = artifacts.require("ReceiveAgent");
+const AgentFactory = artifacts.require("AgentFactory")
+
 const UniswapFactory = artifacts.require('UniswapFactory')
 const UniswapProxy = artifacts.require('UniswapProxy')
 const IUniswapFactory = artifacts.require('IUniswapFactory')
@@ -12,8 +14,7 @@ const TestERC20 = artifacts.require('TestERC20')
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract("ReceiveAgent", accounts => {
-
-  let factory, testToken, testTokenExchange, uniswapProxy;
+  let clone, testToken, testTokenExchange, uniswapProxy;
 
   before("Setup Uniswap factory and exchange" ,async()=>{
     
@@ -35,10 +36,23 @@ contract("ReceiveAgent", accounts => {
     await uniswapProxy.setThreshold(90)
   })
 
+  before("Clone agent instance" ,async()=>{
+    await ReceiveAgent.deployed()
+    await AgentFactory.deployed()
+
+    // clone a copy of ReceiveAgent as proxy
+    const factory = await AgentFactory.at(AgentFactory.address)
+    const newAgentAddress = (await factory.createAgent()).receipt.logs[0].args.newAgentAddress
+
+    const implementation = await ReceiveAgent.at(ReceiveAgent.address)
+    const masterOwner = await implementation.owner()
+
+    clone = await ReceiveAgent.at(newAgentAddress)
+  })
+
   it('should add percentage', async()=>{
-    const proxy = await ReceiveAgent.deployed();
-    await proxy.addRule(testToken.address, accounts[0], UniswapProxy.address, 30);
-    const sumPercentage = await proxy.sumPercentage();
+    await clone.addRule(testToken.address, accounts[0], UniswapProxy.address, 30);
+    const sumPercentage = await clone.sumPercentage();
     assert.equal(
       sumPercentage,
       30,
@@ -47,33 +61,32 @@ contract("ReceiveAgent", accounts => {
   })
   
   it('should delete target split rule', async()=>{
-    const proxy = await ReceiveAgent.deployed();
     const idx = 0
-    const key = await proxy.ruleKeys(idx);
-    await proxy.deleteRule(idx);
+    const key = await clone.ruleKeys(idx);
+    await clone.deleteRule(idx);
 
-    const sumPercentage = await proxy.sumPercentage();
+    const sumPercentage = await clone.sumPercentage();
     assert.equal(
       sumPercentage,
       0,
       "sumPercentage should be 0"
     )
 
-    const asset = await proxy.assets(key);
+    const asset = await clone.assets(key);
     assert.equal(
       asset,
       0,
       "asset map should be empty at position [key]"
     )
 
-    const recipient = await proxy.recipients(key);
+    const recipient = await clone.recipients(key);
     assert.equal(
       recipient,
       0,
       "recipient map should be empty at position [key]"
     )
 
-    const percentage = await proxy.percentages(key);
+    const percentage = await clone.percentages(key);
     assert.equal(
       percentage,
       0,
@@ -87,15 +100,14 @@ contract("ReceiveAgent", accounts => {
     const account1EthRatio = 30
     const account2TokenRatio = 60
 
-    const proxy = await ReceiveAgent.deployed()
-    await proxy.addRule(ZERO_ADDRESS, accounts[1], ZERO_ADDRESS, account1EthRatio)
-    await proxy.addRule(testToken.address, accounts[2], UniswapProxy.address, account2TokenRatio)
+    await clone.addRule(ZERO_ADDRESS, accounts[1], ZERO_ADDRESS, account1EthRatio)
+    await clone.addRule(testToken.address, accounts[2], UniswapProxy.address, account2TokenRatio)
 
     const account1EthBalance = await web3.eth.getBalance(accounts[1])
     
     // const account2TokenBalance = await testToken.balanceOf(accounts[2]);
     
-    await proxy.send(web3.utils.toWei(amountToSend, 'ether'))
+    await clone.send(web3.utils.toWei(amountToSend, 'ether'))
     
     // const account2TokenBalanceAfter = await testToken.balanceOf(accounts[2]);
     
