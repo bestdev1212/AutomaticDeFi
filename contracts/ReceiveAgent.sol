@@ -1,6 +1,5 @@
 pragma solidity ^0.5.0;
 
-// import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./exchange/ExchangeProxy.sol";
 
@@ -58,6 +57,10 @@ contract ReceiveAgent {
     function init(address _owner) external {
         require(owner == address(0), "RA: Wallet already initialised");
         owner = _owner;
+    }
+
+    function countKeys() external view returns (uint) {
+        return ruleKeys.length;
     }
 
     /**

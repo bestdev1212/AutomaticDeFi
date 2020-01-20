@@ -8,7 +8,7 @@ contract AgentFactory is CloneFactory {
 
     address public agentImplementation;
 
-    event AgentCreated(address newAgentAddress);
+    event AgentCreated( address indexed newAgentAddress, address indexed owner);
 
     constructor(address _implementation) public {
         agentImplementation = _implementation;
@@ -17,6 +17,6 @@ contract AgentFactory is CloneFactory {
     function createAgent() public returns (address payable clone) {
         clone = createClone(agentImplementation);
         ReceiveAgent(clone).init(msg.sender);
-        emit AgentCreated(clone);
+        emit AgentCreated(clone, msg.sender);
     }
 }
