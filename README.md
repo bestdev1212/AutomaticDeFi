@@ -1,1 +1,1 @@
-# Auto Invest Contract
+# Auto Investment Contract
